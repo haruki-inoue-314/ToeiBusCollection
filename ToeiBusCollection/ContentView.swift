@@ -1,59 +1,71 @@
-//
-//  ContentView.swift
-//
-     
-
 import SwiftUI
 import SwiftData
 
 struct ContentView: View {
-    @Environment(\.modelContext) private var modelContext
-    @Query private var items: [Item]
+  @Environment(\.modelContext) private var modelContext
+  @Query(sort: \RoutesItem.routeId) private var routesItems: [RoutesItem]
 
-    var body: some View {
-        NavigationSplitView {
-            List {
-                ForEach(items) { item in
-                    NavigationLink {
-                        Text("Item at \(item.timestamp, format: Date.FormatStyle(date: .numeric, time: .standard))")
-                    } label: {
-                        Text(item.timestamp, format: Date.FormatStyle(date: .numeric, time: .standard))
-                    }
-                }
-                .onDelete(perform: deleteItems)
-            }
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    EditButton()
-                }
-                ToolbarItem {
-                    Button(action: addItem) {
-                        Label("Add Item", systemImage: "plus")
-                    }
-                }
-            }
-        } detail: {
-            Text("Select an item")
+  var body: some View {
+    NavigationStack {
+      List {
+        ForEach(routesItems) { item in
+          Button {
+            item.isCompleted.toggle()
+          } label: {
+            itemCell(name: item.routeShortName, isCompleted: item.isCompleted)
+          }
+
         }
+      }
+      .navigationTitle("都営バス乗車記録")
+    }
+    .onAppear {
+      addRouteItem()
+    }
+  }
+
+  private func itemCell(name: String, isCompleted: Bool) -> some View {
+    HStack {
+      Image(systemName: isCompleted ? "checkmark.circle.fill" : "circle")
+      Text(name)
+        .foregroundStyle(.black)
+    }
+  }
+
+
+  private func addRouteItem() {
+    // すでにデータがある場合は処理をしない
+    if !routesItems.isEmpty {
+      return
     }
 
-    private func addItem() {
-        withAnimation {
-            let newItem = Item(timestamp: Date())
-            modelContext.insert(newItem)
-        }
+    // csvファイルのパスを取得
+    guard
+      let path = Bundle.main.path(forResource: "routes", ofType: "csv"),
+      let csvString = try? String(contentsOfFile: path, encoding: .utf8)
+    else {
+      return
     }
 
-    private func deleteItems(offsets: IndexSet) {
-        withAnimation {
-            for index in offsets {
-                modelContext.delete(items[index])
-            }
-        }
+    let lines = csvString.components(separatedBy: .newlines).dropFirst().dropLast()
+
+    for line in lines {
+      let columns = line.components(separatedBy: ",")
+      let routeId = columns[0]
+      let routeShortName = columns[2]
+      let routeUrl = columns[6]
+      let routeColor = columns[7]
+      let routeTextColor = columns[8]
+
+      let routesItem = RoutesItem(routeId: routeId, routeShortName: routeShortName, routeUrl: routeUrl, routeColor: routeColor, routeTextColor: routeTextColor)
+
+      modelContext.insert(routesItem)
     }
+  }
 }
 
+
 #Preview {
-    ContentView()
-        .modelContainer(for: Item.self, inMemory: true)
+  ContentView()
+    .modelContainer(for: RoutesItem.self, inMemory: true)
 }

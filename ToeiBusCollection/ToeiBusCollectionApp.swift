@@ -10,7 +10,7 @@ import SwiftData
 struct ToeiBusCollectionApp: App {
     var sharedModelContainer: ModelContainer = {
         let schema = Schema([
-            Item.self,
+          RoutesItem.self,
         ])
         let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
 
