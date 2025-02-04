@@ -27,6 +27,7 @@ struct ContentView: View {
   private func itemCell(name: String, isCompleted: Bool) -> some View {
     HStack {
       Image(systemName: isCompleted ? "checkmark.circle.fill" : "circle")
+        .foregroundColor(isCompleted ? .blue : .gray)
       Text(name)
         .foregroundStyle(.black)
     }
