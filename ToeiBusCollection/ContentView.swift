@@ -6,6 +6,7 @@ struct ContentView: View {
   @Query(sort: \RoutesItem.routeId) private var routesItems: [RoutesItem]
 
   @State var searchText: String = ""
+  @State var selectedRouteItem: RoutesItem?
 
   var filteredItems: [RoutesItem] {
     if searchText.isEmpty {
@@ -20,7 +21,7 @@ struct ContentView: View {
       List {
         ForEach(filteredItems) { item in
           Button {
-            item.isCompleted.toggle()
+            selectedRouteItem = item
           } label: {
             itemCell(name: item.routeShortName, isCompleted: item.isCompleted)
           }
@@ -33,6 +34,16 @@ struct ContentView: View {
     }
     .onAppear {
       addRouteItem()
+    }
+    .sheet(item: $selectedRouteItem) { item in
+      ActionView(
+        item: item,
+        action: { item in
+          item.isCompleted.toggle()
+          selectedRouteItem = nil
+        }
+      )
+      .presentationDetents([.height(180)])
     }
   }
 
