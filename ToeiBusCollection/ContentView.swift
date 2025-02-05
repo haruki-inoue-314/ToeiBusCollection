@@ -5,10 +5,20 @@ struct ContentView: View {
   @Environment(\.modelContext) private var modelContext
   @Query(sort: \RoutesItem.routeId) private var routesItems: [RoutesItem]
 
+  @State var searchText: String = ""
+
+  var filteredItems: [RoutesItem] {
+    if searchText.isEmpty {
+      return routesItems
+    }
+
+    return routesItems.filter { $0.routeShortName.localizedStandardContains(searchText) }
+  }
+
   var body: some View {
     NavigationStack {
       List {
-        ForEach(routesItems) { item in
+        ForEach(filteredItems) { item in
           Button {
             item.isCompleted.toggle()
           } label: {
@@ -18,6 +28,8 @@ struct ContentView: View {
         }
       }
       .navigationTitle("都営バス乗車記録")
+      .searchable(text: $searchText)
+      .listStyle(.plain)
     }
     .onAppear {
       addRouteItem()
